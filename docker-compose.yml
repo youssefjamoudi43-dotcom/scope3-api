@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - DATABASE_URL="file:./dev.db"
+      - ENTERPRISE_API_KEY=${ENTERPRISE_API_KEY}
+    volumes:
+      - ./data:/app/data

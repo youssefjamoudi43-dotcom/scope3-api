@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESG Audit Acceleration Platform</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: #0f1117; color: #e4e4e7; display: flex; min-height: 100vh; }
+    .sidebar { width: 240px; background: #18181b; border-right: 1px solid #27272a; padding: 24px 16px; flex-shrink: 0; }
+    .logo { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 32px; padding-left: 8px; display: flex; align-items: center; gap: 8px; }
+    .logo span { color: #6366f1; }
+    .nav-item { padding: 10px 12px; border-radius: 6px; color: #a1a1aa; font-size: 14px; cursor: pointer; margin-bottom: 4px; transition: 0.2s; display: flex; align-items: center; gap: 10px; }
+    .nav-item:hover { background: #27272a; color: #fff; }
+    .nav-item.active { background: #6366f1; color: #fff; }
+    .main { flex: 1; padding: 40px; max-width: 1200px; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+    h1 { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .subtitle { color: #71717a; font-size: 14px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 20px; }
+    .stat-label { font-size: 12px; color: #71717a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .stat-value { font-size: 28px; font-weight: 700; color: #fff; }
+    .upload-zone { border: 2px dashed #3f3f46; border-radius: 12px; padding: 48px; text-align: center; cursor: pointer; transition: all 0.2s; background: #18181b; margin-bottom: 24px; }
+    .upload-zone:hover { border-color: #6366f1; background: #1f1f23; }
+    .upload-zone.dragover { border-color: #6366f1; background: #1f1f23; transform: scale(1.01); }
+    .upload-icon { font-size: 48px; margin-bottom: 16px; }
+    .upload-text { font-size: 16px; color: #a1a1aa; }
+    .status { margin-top: 24px; padding: 16px; border-radius: 8px; font-size: 14px; display: none; }
+    .status.processing { display: block; background: #1e3a5f; color: #93c5fd; }
+    .status.success { display: block; background: #14532d; color: #86efac; }
+    .status.error { display: block; background: #7f1d1d; color: #fca5a5; }
+    .results { margin-top: 24px; display: none; }
+    .result-card { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+    .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #27272a; }
+    .supplier-name { font-size: 20px; font-weight: 600; color: #fff; }
+    .reporting-period { font-size: 14px; color: #71717a; background: #27272a; padding: 4px 12px; border-radius: 6px; }
+    .metric-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 16px 0; border-bottom: 1px solid #27272a; }
+    .metric-row:last-child { border-bottom: none; }
+    .metric-name { font-size: 14px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .metric-value { font-size: 24px; font-weight: 700; color: #6366f1; }
+    .metric-unit { font-size: 14px; color: #71717a; margin-left: 4px; }
+    .meta-info { display: flex; gap: 12px; margin-top: 8px; font-size: 12px; align-items: center; }
+    .badge { padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+    .badge-page { background: #27272a; color: #a1a1aa; }
+    .badge-conf { background: #14532d; color: #86efac; }
+    .review-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .review-btn { padding: 4px 10px; border-radius: 4px; border: 1px solid #3f3f46; background: transparent; color: #a1a1aa; font-size: 12px; cursor: pointer; transition: 0.2s; }
+    .review-btn:hover { border-color: #6366f1; color: #fff; }
+    .source-quote { font-size: 12px; color: #52525b; margin-top: 8px; font-style: italic; }
+    .extraction-id { font-size: 12px; color: #52525b; margin-top: 16px; text-align: center; font-family: monospace; }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #93c5fd; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .export-btn { display: block; width: 100%; background: #6366f1; color: #fff; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 16px; transition: 0.2s; }
+    .export-btn:hover { background: #4f46e5; }
+    .paywall-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 100; }
+    .modal-content { background: #18181b; border: 1px solid #6366f1; border-radius: 12px; padding: 32px; max-width: 400px; text-align: center; }
+    .modal-title { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+    .modal-text { color: #a1a1aa; font-size: 14px; line-height: 1.5; margin-bottom: 24px; }
+    .modal-btn { background: #6366f1; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">◈ ESG<span>Audit</span></div>
+    <div class="nav-item active">📊 Dashboard</div>
+    <div class="nav-item">📜 Audit History</div>
+    <div class="nav-item">⚙️ Settings</div>
+  </div>
+
+  <div class="main">
+    <div class="header">
+      <div>
+        <h1>ESG Audit Acceleration Platform</h1>
+        <p class="subtitle">Extract CSRD metrics with page-level traceability, confidence scoring, and human review.</p>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Metrics Extracted</div><div class="stat-value" id="metricCount">0</div></div>
+      <div class="stat-card"><div class="stat-label">Documents Processed</div><div class="stat-value" id="docCount">0</div></div>
+      <div class="stat-card"><div class="stat-label">Avg Confidence</div><div class="stat-value" id="avgConfidence">0%</div></div>
+    </div>
+
+    <div class="upload-zone" id="uploadZone">
+      <div class="upload-icon">📄</div>
+      <div class="upload-text">Drop your ESG Report here or click to browse</div>
+      <div class="upload-subtext" style="color: #52525b; font-size: 13px; margin-top: 8px;">Supports PDF, TXT, CSV - Max 10MB</div>
+    </div>
+    <input type="file" id="fileInput" style="display: none" accept=".pdf,.txt,.csv">
+
+    <div class="status" id="status"></div>
+    <div class="results" id="results"></div>
+  </div>
+
+  <div class="paywall-modal" id="paywallModal">
+    <div class="modal-content">
+      <div class="modal-title">🔒 Enterprise License Required</div>
+      <div class="modal-text">Generating Forensic Audit Files requires an active Enterprise License. Reclaim your analyst time today.</div>
+      <button class="modal-btn" onclick="document.getElementById('paywallModal').style.display='none'">Close</button>
+    </div>
+  </div>
+
+  <script>
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const status = document.getElementById('status');
+    const results = document.getElementById('results');
+
+    uploadZone.addEventListener('click', () => fileInput.click());
+    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
+
+    async function handleFile(file) {
+      status.className = 'status processing';
+      const startTime = Date.now();
+      status.innerHTML = '<span class="spinner"></span>Extracting metrics from ' + file.name + '...';
+      results.style.display = 'none';
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const response = await fetch('/extract-document', { method: 'POST', body: formData });
+        const result = await response.json();
+        const elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(1);
+        
+        if (response.ok && result.success) {
+          status.className = 'status success';
+          status.innerHTML = '✅ Extraction completed in ' + elapsedSeconds + 's. Estimated manual review time saved: 2.5 hours.';
+          renderResults(result);
+          fetchStats();
+        } else {
+          throw new Error(result.error || 'Extraction failed');
+        }
+      } catch (error) {
+        status.className = 'status error';
+        status.innerHTML = '❌ ' + error.message;
+      }
+    }
+
+    function renderResults(result) {
+      const data = result.data;
+      let metricsHtml = '';
+      const totalCsrdDatapoints = 50;
+      
+      data.metrics.forEach((m, index) => {
+        metricsHtml += '<div class="metric-row" id="metric-' + index + '"><div><div class="metric-name">' + m.metric_name.replace(/_/g, ' ') + '</div><div class="meta-info"><span class="badge badge-page">Page ' + m.page_number + '</span><span class="badge badge-conf">' + m.confidence_score + '% Confidence</span></div><div class="source-quote">Evidence: "' + m.source_quote + '"</div><div class="review-actions"><button class="review-btn" onclick="approveMetric(' + index + ')">✓ Approve</button><button class="review-btn" onclick="overrideMetric(' + index + ')">✎ Override</button><button class="review-btn" onclick="rejectMetric(' + index + ')">✕ Reject</button></div></div><div><span class="metric-value">' + m.value.toLocaleString() + '</span><span class="metric-unit">' + m.unit + '</span></div></div>';
+      });
+      
+      const extractionId = result.extractionId;
+      results.innerHTML = '<div class="result-card"><div class="result-header"><div class="supplier-name">' + data.supplier_name + '</div><div class="reporting-period">FY ' + data.reporting_period + ' | ' + data.metrics.length + ' / ' + totalCsrdDatapoints + ' CSRD Datapoints Extracted</div></div>' + metricsHtml + '</div><button class="export-btn" id="exportBtn">📄 Export Forensic Audit File</button><div class="extraction-id">Audit Trail ID: ' + extractionId + '</div>';
+      
+      document.getElementById('exportBtn').addEventListener('click', function() {
+        attemptExport(extractionId);
+      });
+      
+      results.style.display = 'block';
+    }
+
+    function approveMetric(index) {
+      const btn = document.querySelector('#metric-' + index + ' .review-actions');
+      btn.innerHTML = '<span style="color: #86efac; font-size: 12px; font-weight: 600;">✓ Approved</span>';
+    }
+    function overrideMetric(index) {
+      const newVal = prompt('Enter new value for this metric:');
+      if (newVal !== null) {
+        const valSpan = document.querySelector('#metric-' + index + ' .metric-value');
+        valSpan.innerText = parseFloat(newVal).toLocaleString();
+        const btn = document.querySelector('#metric-' + index + ' .review-actions');
+        btn.innerHTML = '<span style="color: #93c5fd; font-size: 12px; font-weight: 600;">✎ Overridden</span>';
+      }
+    }
+    function rejectMetric(index) {
+      const btn = document.querySelector('#metric-' + index + ' .review-actions');
+      btn.innerHTML = '<span style="color: #fca5a5; font-size: 12px; font-weight: 600;">✕ Rejected</span>';
+    }
+
+    async function attemptExport(extractionId) {
+      try {
+        const res = await fetch('/api/export/' + extractionId);
+        if (res.status === 403) {
+          document.getElementById('paywallModal').style.display = 'flex';
+        } else if (res.ok) {
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'audit-evidence.csv';
+          a.click();
+        }
+      } catch (e) {
+        alert('Export failed.');
+      }
+    }
+
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/extractions');
+        const data = await res.json();
+        
+        let totalMetrics = 0;
+        let totalConf = 0;
+        let confCount = 0;
+
+        data.forEach(d => {
+          if (d.payload && d.payload.metrics) {
+            totalMetrics += d.payload.metrics.length;
+            d.payload.metrics.forEach(m => {
+              if (m.confidence_score) {
+                totalConf += m.confidence_score;
+                confCount++;
+              }
+            });
+          }
+        });
+
+        document.getElementById('metricCount').innerText = totalMetrics;
+        document.getElementById('docCount').innerText = data.length;
+        document.getElementById('avgConfidence').innerText = confCount > 0 ? (totalConf / confCount).toFixed(1) + '%' : '0%';
+      } catch (e) {}
+    }
+
+    fetchStats();
+  </script>
+</body>
+</html>
